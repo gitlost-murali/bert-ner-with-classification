@@ -1,0 +1,9 @@
+*.pt
+*.csv
+*.tsv
+*.json
+input/
+*.bin
+*.pyc
+*.jpg
+.vscode/
