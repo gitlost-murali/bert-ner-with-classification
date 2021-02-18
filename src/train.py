@@ -39,7 +39,7 @@ def read_bilou(data_path):
     return sentences, sent_tags, enc_tag
 
 def read_prof_bilou(data_path):
-    with open(data_path,'r') as fh:
+    with open(data_path,'r',encoding="utf-8") as fh:
         bilou_data = json.load(fh)
     
     sentences = []
@@ -109,8 +109,9 @@ def process_data_conll(data_path):
 
 
 if __name__ == "__main__":
-    sentences, tag, classification_tags, enc_tag, classify_enc_tag = read_prof_bilou(config.params["TRAINING_FILE"])
-
+    
+    train_sentences, train_tag, train_classify_tag, enc_tag, classify_enc_tag = read_prof_bilou(config.params["TRAINING_FILE"])
+    test_sentences, test_tag, test_classify_tag, _, _ = read_prof_bilou(config.params["VALIDATION_FILE"])
 
     meta_data = {
         "enc_tag": enc_tag,
@@ -121,15 +122,6 @@ if __name__ == "__main__":
 
     num_tag = len(list(enc_tag.classes_))
     num_classify_tag = len(list(classify_enc_tag.classes_))
-
-    (
-        train_sentences,
-        test_sentences,
-        train_tag,
-        test_tag,
-        train_classify_tag,
-        test_classify_tag
-    ) = model_selection.train_test_split(sentences, tag, classification_tags, random_state=config.params["RANDOM_STATE"], test_size=config.params["VALIDATION_SPLIT"])
 
     train_dataset = dataset.EntityDataset(
         texts=train_sentences, tags=train_tag, classification_tags=train_classify_tag, O_tag_id= enc_tag.transform(["O"])[0]
@@ -190,7 +182,7 @@ if __name__ == "__main__":
         wandb.log({"Validation Metric details": table})
         wandb.log({"Weighted average": weighted_average, "Micro average": micro_average})
 
-        print(f"Train Loss = {train_loss} Valid Loss = {test_loss}, Metrics = {df_metrics}, Classify Metrics = {classification_metrics}")
+        print(f"Train Loss = {train_loss} Valid Loss = {test_loss}, \nMetrics = {df_metrics}, \nClassify Metrics = {pd.DataFrame.from_dict(classification_metrics)} ")
         if test_loss < best_loss:
             torch.save(model.state_dict(), config.params["MODEL_PATH"])
             model.save_pretrained_model(config.params["BASE_MODEL_PATH"]+"_finetuned_"+config.params["language"])
